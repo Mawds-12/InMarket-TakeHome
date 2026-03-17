@@ -1,0 +1,43 @@
+# Environment files — never commit
+MCP/.env
+Backend/.env
+FrontEnd/.env.local
+
+# Python virtual environments
+MCP/venv/
+Backend/venv/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Node modules
+FrontEnd/node_modules/
+FrontEnd/.next/
+node_modules/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

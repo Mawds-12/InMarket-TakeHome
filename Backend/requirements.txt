@@ -1,0 +1,20 @@
+# Python version requirement
+python-version>=3.11
+
+# Web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# LLM orchestration
+langchain>=0.1.0
+langchain-anthropic>=0.1.0
+
+# Data validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# HTTP client for MCP service calls
+httpx>=0.25.0
+
+# Environment variable management
+python-dotenv>=1.0.0
