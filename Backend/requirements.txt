@@ -1,7 +1,7 @@
 # Web framework
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
-websockets==11.0.3
+websockets>=12.0
 
 # LLM orchestration
 langchain>=0.1.0

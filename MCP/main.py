@@ -3,9 +3,8 @@
 # FastMCP application entry point for the Legal Research MCP service.
 # Exposes tools for IP geolocation, case law search, and legislative search.
 
-import signal
-import sys
 import asyncio
+import sys
 import warnings
 from fastmcp import FastMCP
 from typing import Literal
@@ -109,11 +108,6 @@ async def search_bills(query: str, state: str) -> list[dict]:
         return []
 
 
-def signal_handler(sig, frame):
-    print("\n[MCP] Shutting down gracefully...")
-    # Don't call sys.exit() - let Uvicorn handle shutdown naturally
-    # The signal will propagate to the server which will shut down cleanly
-
 def suppress_windows_connection_errors(loop, context):
     """Suppress harmless Windows connection reset errors during socket cleanup."""
     if 'exception' in context:
@@ -125,10 +119,6 @@ def suppress_windows_connection_errors(loop, context):
     loop.default_exception_handler(context)
 
 if __name__ == "__main__":
-    # Register signal handlers for clean shutdown
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
     # Suppress harmless Windows connection errors
     if sys.platform == 'win32':
         loop = asyncio.new_event_loop()

@@ -60,9 +60,20 @@ async def websocket_analyze(websocket: WebSocket):
         search_mode: Search mode (semantic/keyword)
         detected_state: Pre-detected state code
     """
-    logger.info("WebSocket connection attempt received")
-    await websocket.accept()
-    logger.info("WebSocket connection accepted")
+    logger.info(f"WebSocket connection attempt received from {websocket.client}")
+    logger.info(f"WebSocket headers: {dict(websocket.headers)}")
+    
+    # Get origin from headers
+    origin = websocket.headers.get("origin", "http://localhost:3000")
+    logger.info(f"WebSocket origin: {origin}")
+    
+    try:
+        # Accept with explicit origin (allows CORS)
+        await websocket.accept()
+        logger.info("WebSocket connection accepted successfully")
+    except Exception as e:
+        logger.error(f"Failed to accept WebSocket connection: {type(e).__name__}: {str(e)}")
+        raise
     
     overall_start = time.time()
     total_tokens = 0

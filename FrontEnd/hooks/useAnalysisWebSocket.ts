@@ -58,6 +58,8 @@ export function useAnalysisWebSocket(): UseAnalysisWebSocketReturn {
     try {
       setError(null)
       setIsConnected(false)
+      // Reset WebSocket state for clean analysis
+      wsRef.current.reset()
       await wsRef.current.connect(params)
       setIsConnected(true)
     } catch (err) {

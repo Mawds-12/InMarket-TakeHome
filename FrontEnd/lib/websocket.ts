@@ -43,7 +43,7 @@ export class AnalysisWebSocket {
     detected_state?: string
   }): Promise<void> {
     return new Promise((resolve, reject) => {
-      const url = 'ws://localhost:8000/ws/analyze'
+      const url = 'ws://localhost:3000/ws/analyze'
       console.log('[WebSocket] Connecting to:', url)
       
       this.ws = new WebSocket(url)

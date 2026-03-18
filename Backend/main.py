@@ -4,8 +4,6 @@ from contextlib import asynccontextmanager
 from config import settings
 from routers import analyze, dev, websocket_analyze
 from services.mcp_client import initialize_mcp_client, close_mcp_client
-import signal
-import sys
 
 
 @asynccontextmanager
@@ -49,22 +47,14 @@ managing all LLM interactions and workflow orchestration.
     lifespan=lifespan
 )
 
+# CORS middleware - Required for WebSocket connections from browser
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Signal handlers for clean shutdown
-def signal_handler(sig, frame):
-    print("\n[Backend] Shutting down gracefully...")
-    # Don't call sys.exit() - let Uvicorn handle shutdown naturally
-    # The signal will propagate to Uvicorn which will shut down cleanly
-
-signal.signal(signal.SIGINT, signal_handler)
-signal.signal(signal.SIGTERM, signal_handler)
 
 # Include routers
 app.include_router(analyze.router, tags=["analysis"])

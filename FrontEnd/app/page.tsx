@@ -57,6 +57,7 @@ export default function Home() {
     e.preventDefault()
     setResult(null)
     setShowForm(false)
+    // Don't reset progress here - let it show until new data arrives
 
     try {
       await connect({

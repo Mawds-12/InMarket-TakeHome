@@ -9,9 +9,9 @@
     "setup:frontend": "cd FrontEnd && npm install",
     "setup:check": "node scripts/check-deps.js",
     "predev": "npm run setup:env && npm run setup:check",
-    "dev": "concurrently --prefix \"[{name}]\" --names \"MCP,Backend,Frontend\" --prefix-colors \"cyan,magenta,green\" \"npm run dev:mcp\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "concurrently --prefix \"[{name}]\" --names \"MCP,Backend,Frontend\" --prefix-colors \"cyan,magenta,green\" --kill-others \"npm run dev:mcp\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:mcp": "cd MCP && ..\\venv\\Scripts\\python.exe main.py",
-    "dev:backend": "cd Backend && ..\\venv\\Scripts\\uvicorn.exe main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:backend": "cd Backend && ..\\venv\\Scripts\\uvicorn.exe main:app --host 0.0.0.0 --port 8000 --workers 1 --log-level debug --ws-ping-interval 20 --ws-ping-timeout 20 --ws-max-size 16777216 --ws-max-queue 1024",
     "dev:frontend": "cd FrontEnd && npm run dev"
   },
   "devDependencies": {
