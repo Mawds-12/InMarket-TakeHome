@@ -84,6 +84,25 @@ async def analyze_legal_question(request: AnalyzeRequest, req: Request) -> Brief
         )
 
 
+@router.get("/api/detect-state")
+async def detect_state(req: Request):
+    """
+    Detect state from client IP address.
+    
+    This endpoint is used by the Frontend to pre-fill the jurisdiction selector
+    based on the user's location inferred from their IP address.
+    
+    Returns:
+        Dictionary with state_code field
+    """
+    try:
+        ip = _extract_ip(req)
+        state_code = await infer_state_from_ip(ip)
+        return {"state_code": state_code}
+    except MCPError:
+        return {"state_code": "CA"}
+
+
 async def _determine_jurisdiction(request: AnalyzeRequest, req: Request) -> tuple[str, bool]:
     """
     Determine the jurisdiction for legal research.
@@ -130,7 +149,7 @@ async def _run_retrieval(issue_bundle, state: str, search_mode: str) -> tuple[li
     
     results = await asyncio.gather(*tasks)
     
-    raw_cases = results[0]
-    raw_bills = results[1] if len(results) > 1 else []
+    raw_cases = results[0][0]
+    raw_bills = results[1][0] if len(results) > 1 else []
     
     return raw_cases, raw_bills

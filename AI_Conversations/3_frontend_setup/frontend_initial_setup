@@ -1,0 +1,139 @@
+User: Build a single page Next.js frontend using the App Router and Tailwind CSS only.
+No component libraries. This is a demo — keep it clean and readable, not elaborate.
+
+Layout: One page. A form section at the top, results section below that appears after 
+submission. The form needs a large textarea for the legal question, a state dropdown 
+pre-filled with a detected state and a small label indicating it was auto-detected from 
+the network, an optional smaller textarea for pasting a contract clause or facts, a 
+toggle for including bills alongside cases, and a submit button with a loading state.
+The results section renders only when a response is returned and should show the issue 
+summary, a list of authority cards each with the title, why it is pertinent, and a link 
+to the source, the fact sensitive considerations as a simple list, and the coverage note 
+at the bottom in muted text.
+
+API connection: All fetch calls go through a Next.js API route at /api/analyze that 
+proxies to the Backend. The route should extract the real client IP from request headers 
+and forward it with the request body. The Backend URL comes from an environment variable 
+and is never exposed to the browser.
+
+State detection: On page load call the Backend to get the default state from the user's 
+IP and pre-fill the dropdown. Show a small badge next to the selector that reads 
+"Detected from network" until the user manually changes it, at which point it disappears.
+
+Error and loading states: Disable the form during submission. Show a simple loading 
+indicator on the button. If the Backend returns an error or no results, show a plain 
+inline message — no modals or complex UI.
+
+Types: Define all shared TypeScript interfaces in a single lib/types.ts file matching 
+the BriefResponse schema from the API contracts documentation. Components never call 
+fetch directly — all network calls go through a single lib/api.ts file.
+
+---
+
+Model: Reviewed existing structure. Plan summary:
+
+Files to Create/Update:
+- app/api/detect-state/route.ts - New API route for state detection
+- lib/types.ts - Add StateDetectionResponse interface
+- lib/api.ts - Add detectState() function
+- app/page.tsx - Replace with full UI implementation
+
+Existing Infrastructure (Ready to Use):
+- /api/analyze route already proxies to Backend with IP extraction
+- TypeScript types for BriefResponse already defined
+- fetchBrief() function ready in lib/api.ts
+
+Questions Before Implementation:
+1. State detection endpoint - Should I call Backend's /api/dev/test-geo-lookup or 
+   create a dedicated endpoint?
+2. Include bills behavior - Should the frontend toggle override Backend logic, or just 
+   pass it as a hint?
+
+[Proceeded with implementation]
+
+Files Created/Updated:
+- lib/types.ts - Added StateDetectionResponse interface
+- app/api/detect-state/route.ts - Extracts client IP, calls Backend geo endpoint, 
+  returns detected state or fallback to CA
+- lib/api.ts - Added detectState() with graceful error handling
+- app/page.tsx - Complete UI with all form elements, state detection badge, results 
+  section, loading/error states, all 50 US states in dropdown
+
+Features Implemented:
+- Clean Tailwind CSS only (no component libraries)
+- State auto-detection from IP on mount
+- "Detected from network" badge (disappears on manual change)
+- Form validation (required question, min length)
+- Loading states (disabled form + button text change)
+- Inline error messages (no modals)
+- Authority cards with different styling for cases vs bills
+- Mobile-responsive layoutUser: Build a single page Next.js frontend using the App Router and Tailwind CSS only.
+No component libraries. This is a demo — keep it clean and readable, not elaborate.
+
+Layout: One page. A form section at the top, results section below that appears after 
+submission. The form needs a large textarea for the legal question, a state dropdown 
+pre-filled with a detected state and a small label indicating it was auto-detected from 
+the network, an optional smaller textarea for pasting a contract clause or facts, a 
+toggle for including bills alongside cases, and a submit button with a loading state.
+The results section renders only when a response is returned and should show the issue 
+summary, a list of authority cards each with the title, why it is pertinent, and a link 
+to the source, the fact sensitive considerations as a simple list, and the coverage note 
+at the bottom in muted text.
+
+API connection: All fetch calls go through a Next.js API route at /api/analyze that 
+proxies to the Backend. The route should extract the real client IP from request headers 
+and forward it with the request body. The Backend URL comes from an environment variable 
+and is never exposed to the browser.
+
+State detection: On page load call the Backend to get the default state from the user's 
+IP and pre-fill the dropdown. Show a small badge next to the selector that reads 
+"Detected from network" until the user manually changes it, at which point it disappears.
+
+Error and loading states: Disable the form during submission. Show a simple loading 
+indicator on the button. If the Backend returns an error or no results, show a plain 
+inline message — no modals or complex UI.
+
+Types: Define all shared TypeScript interfaces in a single lib/types.ts file matching 
+the BriefResponse schema from the API contracts documentation. Components never call 
+fetch directly — all network calls go through a single lib/api.ts file.
+
+---
+
+Model: Reviewed existing structure. Plan summary:
+
+Files to Create/Update:
+- app/api/detect-state/route.ts - New API route for state detection
+- lib/types.ts - Add StateDetectionResponse interface
+- lib/api.ts - Add detectState() function
+- app/page.tsx - Replace with full UI implementation
+
+Existing Infrastructure (Ready to Use):
+- /api/analyze route already proxies to Backend with IP extraction
+- TypeScript types for BriefResponse already defined
+- fetchBrief() function ready in lib/api.ts
+
+Questions Before Implementation:
+1. State detection endpoint - Should I call Backend's /api/dev/test-geo-lookup or 
+   create a dedicated endpoint?
+2. Include bills behavior - Should the frontend toggle override Backend logic, or just 
+   pass it as a hint?
+
+[Proceeded with implementation]
+
+Files Created/Updated:
+- lib/types.ts - Added StateDetectionResponse interface
+- app/api/detect-state/route.ts - Extracts client IP, calls Backend geo endpoint, 
+  returns detected state or fallback to CA
+- lib/api.ts - Added detectState() with graceful error handling
+- app/page.tsx - Complete UI with all form elements, state detection badge, results 
+  section, loading/error states, all 50 US states in dropdown
+
+Features Implemented:
+- Clean Tailwind CSS only (no component libraries)
+- State auto-detection from IP on mount
+- "Detected from network" badge (disappears on manual change)
+- Form validation (required question, min length)
+- Loading states (disabled form + button text change)
+- Inline error messages (no modals)
+- Authority cards with different styling for cases vs bills
+- Mobile-responsive layout

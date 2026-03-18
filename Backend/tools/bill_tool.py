@@ -9,7 +9,7 @@ from services.mcp_client import get_mcp_client
 from exceptions import MCPError
 
 
-async def fetch_bills(issue_bundle: IssueBundle, state: str) -> list[RawBill]:
+async def fetch_bills(issue_bundle: IssueBundle, state: str) -> tuple[list[RawBill], dict]:
     """
     Fetch bill results from MCP service.
     
@@ -18,14 +18,16 @@ async def fetch_bills(issue_bundle: IssueBundle, state: str) -> list[RawBill]:
         state: Two-letter state code (e.g., "CA", "OR")
         
     Returns:
-        List of raw bill results
+        Tuple of (list of raw bill results, timing metadata dict)
         
     Raises:
         MCPError: If MCP tool call fails
     """
+    import time
     try:
         client = get_mcp_client()
         
+        start_time = time.time()
         result = await client.call_tool(
             "search_bills",
             arguments={
@@ -33,13 +35,20 @@ async def fetch_bills(issue_bundle: IssueBundle, state: str) -> list[RawBill]:
                 "state": state
             }
         )
+        duration_ms = int((time.time() - start_time) * 1000)
         
         if not result.content:
-            return []
+            return [], {"duration_ms": duration_ms, "count": 0}
         
         bills_data = json.loads(result.content[0].text)
+        bills = [RawBill(**bill) for bill in bills_data]
         
-        return [RawBill(**bill) for bill in bills_data]
+        metadata = {
+            "duration_ms": duration_ms,
+            "count": len(bills)
+        }
+        
+        return bills, metadata
         
     except Exception as e:
         raise MCPError(f"Failed to fetch bills from MCP: {str(e)}") from e

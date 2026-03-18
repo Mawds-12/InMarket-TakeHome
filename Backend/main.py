@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from config import settings
-from routers import analyze, dev
+from routers import analyze, dev, websocket_analyze
 from services.mcp_client import initialize_mcp_client, close_mcp_client
 
 
@@ -57,6 +57,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(analyze.router, tags=["analysis"])
+app.include_router(websocket_analyze.router, tags=["websocket"])
 app.include_router(dev.router, tags=["development"])
 
 

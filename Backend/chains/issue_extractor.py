@@ -33,7 +33,7 @@ _prompt = ChatPromptTemplate.from_messages([
 _chain = _prompt | _model | _parser
 
 
-async def extract_issue(question: str, state: str, clause_text: str = "") -> IssueBundle:
+async def extract_issue(question: str, state: str, clause_text: str = "", callbacks=None) -> IssueBundle:
     """
     Extract structured issue information from a legal question.
     
@@ -41,6 +41,7 @@ async def extract_issue(question: str, state: str, clause_text: str = "") -> Iss
         question: User's plain-English legal question
         state: Jurisdiction code (e.g., "CA", "NY")
         clause_text: Optional contract clause or factual context
+        callbacks: Optional LangChain callbacks for tracking token usage
         
     Returns:
         IssueBundle with search queries and metadata
@@ -49,11 +50,12 @@ async def extract_issue(question: str, state: str, clause_text: str = "") -> Iss
         LLMError: If issue extraction fails
     """
     try:
+        config = {"callbacks": callbacks} if callbacks else {}
         result = await _chain.ainvoke({
             "question": question,
             "state": state,
             "clause_text": clause_text or "None provided.",
-        })
+        }, config=config)
         
         return IssueBundle(**result)
         

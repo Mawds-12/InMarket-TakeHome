@@ -39,7 +39,8 @@ async def write_brief(
     issue_bundle: IssueBundle,
     pertinent_authorities: list[Authority],
     state: str,
-    state_was_inferred: bool
+    state_was_inferred: bool,
+    callbacks=None
 ) -> BriefResponse:
     """
     Write the final structured brief.
@@ -49,6 +50,7 @@ async def write_brief(
         pertinent_authorities: Filtered authorities from relevance reduction
         state: Jurisdiction code used
         state_was_inferred: Whether state was inferred from IP
+        callbacks: Optional LangChain callbacks for tracking token usage
         
     Returns:
         Complete BriefResponse with all fields populated
@@ -57,12 +59,13 @@ async def write_brief(
         LLMError: If brief writing fails
     """
     try:
+        config = {"callbacks": callbacks} if callbacks else {}
         result = await _chain.ainvoke({
             "issue_bundle": json.dumps(issue_bundle.model_dump(), indent=2),
             "pertinent_authorities": json.dumps([auth.model_dump() for auth in pertinent_authorities], indent=2),
             "state": state,
             "state_was_inferred": str(state_was_inferred),
-        })
+        }, config=config)
         
         return BriefResponse(**result)
         

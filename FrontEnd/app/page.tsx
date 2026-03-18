@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { fetchBrief, detectState } from '@/lib/api'
+import { detectState } from '@/lib/api'
 import { BriefResponse } from '@/lib/types'
+import { useAnalysisWebSocket } from '@/hooks/useAnalysisWebSocket'
+import AnalysisProgress from '@/components/AnalysisProgress'
 
 const US_STATES = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
@@ -29,10 +31,11 @@ export default function Home() {
   const [clauseText, setClauseText] = useState('')
   const [selectedState, setSelectedState] = useState('CA')
   const [stateWasDetected, setStateWasDetected] = useState(false)
-  const [includeBills, setIncludeBills] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [searchMode] = useState<'semantic' | 'keyword'>('semantic')
   const [result, setResult] = useState<BriefResponse | null>(null)
+  const [showForm, setShowForm] = useState(true)
+  
+  const { progress, isConnected, error: wsError, connect, reset } = useAnalysisWebSocket()
 
   useEffect(() => {
     const loadStateDetection = async () => {
@@ -52,37 +55,60 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setResult(null)
-    setLoading(true)
+    setShowForm(false)
 
     try {
-      const brief = await fetchBrief({
+      await connect({
         question,
-        clause_text: clauseText || null,
+        clause_text: clauseText || undefined,
         state_override: selectedState,
-        search_mode: 'semantic',
-        include_bills: includeBills
+        search_mode: searchMode,
+        detected_state: selectedState
       })
-      setResult(brief)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to analyze question')
-    } finally {
-      setLoading(false)
+      console.error('WebSocket connection failed:', err)
+      setShowForm(true)
     }
   }
+
+  const handleNewAnalysis = () => {
+    reset()
+    setResult(null)
+    setShowForm(true)
+    setQuestion('')
+    setClauseText('')
+  }
+
+  useEffect(() => {
+    if (progress?.isComplete && progress.briefResponse) {
+      setResult(progress.briefResponse)
+    }
+  }, [progress])
 
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Precedent Brief</h1>
-          <p className="text-gray-600">AI-powered legal research triage</p>
+          <p className="text-gray-900">AI-powered legal research triage</p>
         </header>
 
-        <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 mb-8">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 mb-2">How to Use</h2>
+          <ol className="text-sm text-gray-900 space-y-1 mb-3">
+            <li>1. Enter your legal question below</li>
+            <li>2. Verify the jurisdiction (auto-detected from your location)</li>
+            <li>3. Optionally add contract text or additional facts</li>
+            <li>4. Click "Analyze Question" to get your research brief</li>
+          </ol>
+          <p className="text-xs text-gray-900">Not legal advice. Always verify sources with qualified counsel.</p>
+        </div>
+
+        {showForm && (
+          <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 mb-8">
           <div className="mb-6">
-            <label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="question" className="block text-sm font-medium text-gray-900 mb-2">
               Legal Question *
             </label>
             <textarea
@@ -92,14 +118,14 @@ export default function Home() {
               required
               minLength={10}
               rows={5}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={isConnected}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900"
               placeholder="Enter your legal question here..."
             />
           </div>
 
           <div className="mb-6">
-            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="state" className="block text-sm font-medium text-gray-900 mb-2">
               Jurisdiction
             </label>
             <div className="flex items-center gap-3">
@@ -107,8 +133,8 @@ export default function Home() {
                 id="state"
                 value={selectedState}
                 onChange={handleStateChange}
-                disabled={loading}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                disabled={isConnected}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900"
               >
                 {US_STATES.map(state => (
                   <option key={state.code} value={state.code}>
@@ -117,7 +143,7 @@ export default function Home() {
                 ))}
               </select>
               {stateWasDetected && (
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-xs text-gray-900 bg-gray-100 px-2 py-1 rounded">
                   Detected from network
                 </span>
               )}
@@ -125,7 +151,7 @@ export default function Home() {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="clause" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="clause" className="block text-sm font-medium text-gray-900 mb-2">
               Contract Clause or Facts (Optional)
             </label>
             <textarea
@@ -133,45 +159,46 @@ export default function Home() {
               value={clauseText}
               onChange={(e) => setClauseText(e.target.value)}
               rows={3}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={isConnected}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900"
               placeholder="Paste relevant contract text or factual details..."
             />
           </div>
 
-          <div className="mb-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeBills}
-                onChange={(e) => setIncludeBills(e.target.checked)}
-                disabled={loading}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
-              />
-              <span className="text-sm text-gray-700">Include bills and legislation</span>
-            </label>
-          </div>
-
-          {error && (
+          {wsError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-              {error}
+              {wsError}
             </div>
           )}
 
           <button
             type="submit"
-            disabled={loading || !question || question.length < 10}
+            disabled={isConnected || !question || question.length < 10}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Analyzing...' : 'Analyze Question'}
+            Analyze Question
           </button>
         </form>
+        )}
+
+        {progress && !showForm && (
+          <AnalysisProgress progress={progress} />
+        )}
 
         {result && (
-          <div className="bg-white shadow rounded-lg p-6">
+          <>
+            <div className="mb-4">
+              <button
+                onClick={handleNewAnalysis}
+                className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                New Analysis
+              </button>
+            </div>
+            <div className="bg-white shadow rounded-lg p-6">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Issue Summary</h2>
-              <p className="text-gray-700">{result.issue_summary}</p>
+              <p className="text-gray-900">{result.issue_summary}</p>
             </div>
 
             {result.pertinent_authorities.length > 0 && (
@@ -189,26 +216,26 @@ export default function Home() {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h3 className="font-semibold text-gray-900">{authority.title}</h3>
-                        <span className="text-xs text-gray-500 uppercase px-2 py-1 bg-white rounded">
+                        <span className="text-xs text-gray-900 uppercase px-2 py-1 bg-gray-50 rounded">
                           {authority.kind}
                         </span>
                       </div>
                       {authority.citation && (
-                        <p className="text-sm text-gray-600 mb-1">{authority.citation}</p>
+                        <p className="text-sm text-gray-900 mb-1">{authority.citation}</p>
                       )}
                       {authority.court && (
-                        <p className="text-sm text-gray-600 mb-2">{authority.court}</p>
+                        <p className="text-sm text-gray-900 mb-2">{authority.court}</p>
                       )}
-                      <p className="text-sm text-gray-500 mb-2">{authority.date}</p>
+                      <p className="text-sm text-gray-900 mb-2">{authority.date}</p>
                       
                       <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Why Pertinent:</p>
-                        <p className="text-sm text-gray-700">{authority.why_pertinent}</p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">Why Pertinent:</p>
+                        <p className="text-sm text-gray-900">{authority.why_pertinent}</p>
                       </div>
                       
                       <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Key Point:</p>
-                        <p className="text-sm text-gray-700">{authority.key_point}</p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">Key Point:</p>
+                        <p className="text-sm text-gray-900">{authority.key_point}</p>
                       </div>
                       
                       <a
@@ -233,16 +260,17 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Fact-Sensitive Considerations</h2>
                 <ul className="list-disc list-inside space-y-1">
                   {result.fact_sensitive_considerations.map((consideration, idx) => (
-                    <li key={idx} className="text-gray-700">{consideration}</li>
+                    <li key={idx} className="text-gray-900">{consideration}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             <div className="border-t pt-4">
-              <p className="text-sm text-gray-500">{result.coverage_note}</p>
+              <p className="text-sm text-gray-900">{result.coverage_note}</p>
             </div>
           </div>
+          </>
         )}
       </div>
     </main>
