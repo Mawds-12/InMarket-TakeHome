@@ -43,21 +43,15 @@ export class AnalysisWebSocket {
     detected_state?: string
   }): Promise<void> {
     return new Promise((resolve, reject) => {
-      const baseUrl = 'ws://localhost:8000'
-      const queryParams = new URLSearchParams()
-      
-      queryParams.append('question', params.question)
-      if (params.clause_text) queryParams.append('clause_text', params.clause_text)
-      if (params.state_override) queryParams.append('state_override', params.state_override)
-      if (params.search_mode) queryParams.append('search_mode', params.search_mode)
-      if (params.detected_state) queryParams.append('detected_state', params.detected_state)
-
-      const url = `${baseUrl}/ws/analyze?${queryParams.toString()}`
+      const url = 'ws://localhost:8000/ws/analyze'
       console.log('[WebSocket] Connecting to:', url)
       
       this.ws = new WebSocket(url)
       
       this.ws.onopen = () => {
+        console.log('[WebSocket] Connected, sending analysis parameters')
+        // Send parameters as JSON message after connection
+        this.ws!.send(JSON.stringify(params))
         resolve()
       }
 

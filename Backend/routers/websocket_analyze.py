@@ -26,9 +26,12 @@ router = APIRouter()
 @router.websocket("/ws/test")
 async def websocket_test(websocket: WebSocket):
     """Simple test WebSocket endpoint."""
+    logger.info("Test WebSocket connection attempt received")
     await websocket.accept()
+    logger.info("Test WebSocket connection accepted")
     await websocket.send_text("Connected!")
     await websocket.close()
+    logger.info("Test WebSocket connection closed")
 
 
 async def emit_event(websocket: WebSocket, event):

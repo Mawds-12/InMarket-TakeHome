@@ -60,7 +60,8 @@ app.add_middleware(
 # Signal handlers for clean shutdown
 def signal_handler(sig, frame):
     print("\n[Backend] Shutting down gracefully...")
-    sys.exit(0)
+    # Don't call sys.exit() - let Uvicorn handle shutdown naturally
+    # The signal will propagate to Uvicorn which will shut down cleanly
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)

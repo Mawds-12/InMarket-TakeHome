@@ -5,6 +5,8 @@
 
 import signal
 import sys
+import asyncio
+import warnings
 from fastmcp import FastMCP
 from typing import Literal
 from config import settings
@@ -109,12 +111,29 @@ async def search_bills(query: str, state: str) -> list[dict]:
 
 def signal_handler(sig, frame):
     print("\n[MCP] Shutting down gracefully...")
-    sys.exit(0)
+    # Don't call sys.exit() - let Uvicorn handle shutdown naturally
+    # The signal will propagate to the server which will shut down cleanly
+
+def suppress_windows_connection_errors(loop, context):
+    """Suppress harmless Windows connection reset errors during socket cleanup."""
+    if 'exception' in context:
+        exc = context['exception']
+        # Suppress ConnectionResetError on Windows - this is normal during socket cleanup
+        if isinstance(exc, ConnectionResetError):
+            return
+    # Log other exceptions normally
+    loop.default_exception_handler(context)
 
 if __name__ == "__main__":
     # Register signal handlers for clean shutdown
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    
+    # Suppress harmless Windows connection errors
+    if sys.platform == 'win32':
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.set_exception_handler(suppress_windows_connection_errors)
     
     print("[MCP] Starting Legal Research MCP server...")
     mcp.run(
