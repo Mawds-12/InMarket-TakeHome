@@ -10,6 +10,30 @@ function getPipPath() {
   return isWindows ? 'Scripts\\pip.exe' : 'bin/pip';
 }
 
+// Simple version comparison - returns true if installed < required (outdated)
+function isOutdated(installed, required) {
+  const parseVersion = (version) => {
+    const cleanVersion = version.replace(/[a-zA-Z].*$/, '');
+    return cleanVersion.split('.').map(num => parseInt(num, 10) || 0);
+  };
+  
+  const installedParts = parseVersion(installed);
+  const requiredParts = parseVersion(required);
+  
+  const maxLength = Math.max(installedParts.length, requiredParts.length);
+  while (installedParts.length < maxLength) installedParts.push(0);
+  while (requiredParts.length < maxLength) requiredParts.push(0);
+  
+  for (let i = 0; i < maxLength; i++) {
+    if (installedParts[i] < requiredParts[i]) {
+      return true; // outdated
+    } else if (installedParts[i] > requiredParts[i]) {
+      return false; // newer, not outdated
+    }
+  }
+  return false; // equal, not outdated
+}
+
 // Check Python requirements
 function checkPythonDeps() {
   const requirementsPath = path.join(__dirname, '../Backend/requirements.txt');
@@ -64,10 +88,12 @@ function checkPythonDeps() {
         console.log(`❌ Missing package: ${pkg}`);
         packagesToUpdate.push(`${pkg}==${requiredVersion}`);
         needsUpdate = true;
-      } else if (installedVersion !== requiredVersion) {
-        console.log(`⚠️  Version mismatch: ${pkg} (installed: ${installedVersion}, required: ${requiredVersion})`);
+      } else if (isOutdated(installedVersion, requiredVersion)) {
+        console.log(`⚠️  Outdated package: ${pkg} (installed: ${installedVersion}, required: ${requiredVersion})`);
         packagesToUpdate.push(`${pkg}==${requiredVersion}`);
         needsUpdate = true;
+      } else {
+        console.log(`✅ Package ${pkg} OK (installed: ${installedVersion})`);
       }
     });
     
