@@ -25,7 +25,7 @@ For each pertinent authority, you must populate:
 
 Output a JSON array of Authority objects:
 
-{[
+[
   {{
     "kind": "case" or "bill",
     "title": "exact case name or bill title from input",
@@ -36,7 +36,7 @@ Output a JSON array of Authority objects:
     "why_pertinent": "explanation of connection to user's issue",
     "key_point": "the specific holding or provision that applies"
   }}
-]}
+]
 
 Quality over quantity: It's better to return 3 highly relevant authorities than 10 marginally related ones.
 

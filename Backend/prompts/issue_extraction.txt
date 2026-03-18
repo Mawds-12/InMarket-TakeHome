@@ -6,10 +6,10 @@ Output a JSON object with these exact fields:
 
 {{
   "issue_label": "brief descriptive label of the core legal issue",
-  "topic_tags": ["list", "of", "relevant", "legal", "topics"],
+  "topic_tags": {["list", "of", "relevant", "legal", "topics"]},
   "case_query": "optimized search string for case law databases",
   "bill_query": "optimized search string for legislative databases",
-  "fact_sensitive_points": ["list", "of", "specific", "factual", "questions"],
+  "fact_sensitive_points": {["list", "of", "specific", "factual", "questions"]},
   "need_bills": true or false
 }}
 

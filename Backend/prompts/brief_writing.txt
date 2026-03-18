@@ -11,8 +11,8 @@ Your task is to write a clear, concise brief in JSON format with these exact fie
   "issue_summary": "string",
   "jurisdiction_used": "string",
   "state_was_inferred": boolean,
-  "pertinent_authorities": [array of authority objects],
-  "fact_sensitive_considerations": [array of strings],
+  "pertinent_authorities": {[array of authority objects]},
+  "fact_sensitive_considerations": {[array of strings]},
   "coverage_note": "string"
 }}
 
