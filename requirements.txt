@@ -2,6 +2,9 @@
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 
+# MCP framework (MCP service only)
+fastmcp>=3.0.0
+
 # LLM orchestration (Backend only)
 langchain>=0.1.0
 langchain-anthropic>=0.1.0
