@@ -32,13 +32,19 @@ async def get_default_state_from_ip(ip: str) -> dict:
         raw = await ipinfo.get_location(ip)
         normalized = geo_normalizer.normalize(raw)
         return normalized
-    except IPInfoError as e:
+    except IPInfoError:
         return {
             "country": "US",
             "state": None,
             "state_code": None,
-            "confidence": "error",
-            "error": str(e)
+            "confidence": "error"
+        }
+    except Exception:
+        return {
+            "country": "US",
+            "state": None,
+            "state_code": None,
+            "confidence": "error"
         }
 
 
@@ -67,16 +73,10 @@ async def search_cases(
         results = raw.get("results", [])
         normalized = case_normalizer.normalize(results)
         return normalized
-    except CourtListenerError as e:
-        return [{
-            "case_name": "Error",
-            "court": "",
-            "date": "",
-            "citation": None,
-            "snippet": f"CourtListener search failed: {str(e)}",
-            "url": "",
-            "raw_score": 0.0
-        }]
+    except CourtListenerError:
+        return []
+    except Exception:
+        return []
 
 
 @mcp.tool
@@ -99,17 +99,10 @@ async def search_bills(query: str, state: str) -> list[dict]:
         results = raw.get("results", [])
         normalized = bill_normalizer.normalize(results)
         return normalized
-    except OpenStatesError as e:
-        return [{
-            "bill_id": "Error",
-            "title": f"Open States search failed: {str(e)}",
-            "state": state,
-            "session": "",
-            "url": "",
-            "latest_action": "",
-            "latest_action_date": "",
-            "status": []
-        }]
+    except OpenStatesError:
+        return []
+    except Exception:
+        return []
 
 
 if __name__ == "__main__":

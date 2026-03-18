@@ -34,3 +34,10 @@ export interface AnalyzeRequest {
   search_mode: 'semantic' | 'keyword'
   include_bills: boolean
 }
+
+export interface StateDetectionResponse {
+  country: string
+  state: string | null
+  state_code: string | null
+  confidence: string
+}
