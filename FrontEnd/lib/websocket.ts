@@ -53,6 +53,7 @@ export class AnalysisWebSocket {
       if (params.detected_state) queryParams.append('detected_state', params.detected_state)
 
       const url = `${baseUrl}/ws/analyze?${queryParams.toString()}`
+      console.log('[WebSocket] Connecting to:', url)
       
       this.ws = new WebSocket(url)
       

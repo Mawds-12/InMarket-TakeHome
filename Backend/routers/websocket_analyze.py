@@ -2,6 +2,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 import json
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 from models.schemas import AnalyzeRequest
 from models.events import (
     StageStartedEvent, StageCompletedEvent, IssueExtractedEvent,
@@ -20,9 +23,19 @@ from exceptions import LLMError, MCPError
 router = APIRouter()
 
 
+@router.websocket("/ws/test")
+async def websocket_test(websocket: WebSocket):
+    """Simple test WebSocket endpoint."""
+    await websocket.accept()
+    await websocket.send_text("Connected!")
+    await websocket.close()
+
+
 async def emit_event(websocket: WebSocket, event):
     """Send event to WebSocket client."""
-    await websocket.send_text(event.model_dump_json())
+    event_json = event.model_dump_json()
+    logger.debug(f"Emitting event: {event.event_type}")
+    await websocket.send_text(event_json)
 
 
 async def _truncate_query(query: str, max_length: int = 80) -> str:
@@ -37,26 +50,36 @@ async def websocket_analyze(websocket: WebSocket):
     """
     WebSocket endpoint for real-time analysis with progress updates.
     
-    Query parameters:
-        question: Legal question
+    Expects JSON message with analysis parameters:
+        question: Legal question (required)
         clause_text: Optional clause text
         state_override: Optional state override
         search_mode: Search mode (semantic/keyword)
+        detected_state: Pre-detected state code
     """
+    logger.info("WebSocket connection attempt received")
     await websocket.accept()
+    logger.info("WebSocket connection accepted")
     
     overall_start = time.time()
     total_tokens = 0
     
     try:
-        # Parse request from query params
-        params = dict(websocket.query_params)
-        question = params.get("question", "")
-        clause_text = params.get("clause_text", "")
-        state_override = params.get("state_override")
-        search_mode = params.get("search_mode", "semantic")
+        # Receive analysis parameters from client
+        logger.info("Waiting for analysis parameters from client...")
+        data = await websocket.receive_text()
+        logger.info(f"Received raw data: {data}")
+        request_data = json.loads(data)
+        logger.info(f"Parsed request data: {request_data}")
+        
+        question = request_data.get("question", "")
+        clause_text = request_data.get("clause_text", "")
+        state_override = request_data.get("state_override")
+        search_mode = request_data.get("search_mode", "semantic")
+        detected_state = request_data.get("detected_state", "CA")
         
         if not question:
+            logger.warning("Validation failed: Question is required")
             await emit_event(websocket, ErrorEvent(
                 message="Question is required",
                 error_type="ValidationError"
@@ -64,17 +87,18 @@ async def websocket_analyze(websocket: WebSocket):
             await websocket.close()
             return
         
+        logger.info(f"Starting analysis - Question: {question[:100]}..., State: {state_override or detected_state}")
+        
         # Stage 0: Jurisdiction
         stage_start = time.time()
+        logger.info("Starting stage: jurisdiction")
         await emit_event(websocket, StageStartedEvent(stage="jurisdiction"))
         
         if state_override:
             state = state_override
             state_was_inferred = False
         else:
-            # For WebSocket, we don't have easy access to client IP
-            # Default to CA or accept as param
-            state = params.get("detected_state", "CA")
+            state = detected_state
             state_was_inferred = True
         
         duration_ms = int((time.time() - stage_start) * 1000)
@@ -220,8 +244,10 @@ async def websocket_analyze(websocket: WebSocket):
         ))
         
         await websocket.close()
+        logger.info("Analysis completed successfully")
         
     except LLMError as e:
+        logger.error(f"LLM error during analysis: {str(e)}")
         await emit_event(websocket, ErrorEvent(
             stage="llm",
             message=str(e),
@@ -230,6 +256,7 @@ async def websocket_analyze(websocket: WebSocket):
         await websocket.close()
         
     except MCPError as e:
+        logger.error(f"MCP error during analysis: {str(e)}")
         await emit_event(websocket, ErrorEvent(
             stage="mcp",
             message=str(e),
@@ -238,11 +265,14 @@ async def websocket_analyze(websocket: WebSocket):
         await websocket.close()
         
     except WebSocketDisconnect:
-        pass
+        logger.info("WebSocket disconnected by client")
         
     except Exception as e:
+        logger.error(f"Unexpected error during WebSocket analysis: {str(e)}", exc_info=True)
         await emit_event(websocket, ErrorEvent(
             message=f"Unexpected error: {str(e)}",
             error_type="UnexpectedError"
         ))
         await websocket.close()
+    finally:
+        logger.info("WebSocket connection closed")

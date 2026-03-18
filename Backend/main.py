@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from config import settings
 from routers import analyze, dev, websocket_analyze
 from services.mcp_client import initialize_mcp_client, close_mcp_client
+import signal
+import sys
 
 
 @asynccontextmanager
@@ -54,6 +56,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Signal handlers for clean shutdown
+def signal_handler(sig, frame):
+    print("\n[Backend] Shutting down gracefully...")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # Include routers
 app.include_router(analyze.router, tags=["analysis"])

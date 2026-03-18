@@ -9,7 +9,7 @@
     "setup:frontend": "cd FrontEnd && npm install",
     "setup:check": "node -e \"const fs=require('fs'); if(!fs.existsSync('venv')){console.log('Installing Python dependencies...'); process.exit(1);} if(!fs.existsSync('FrontEnd/node_modules')){console.log('Installing Frontend dependencies...'); process.exit(1);}\"",
     "predev": "npm run setup:env && (npm run setup:check || (npm run setup:python && npm run setup:frontend))",
-    "dev": "concurrently --kill-others-on-fail --prefix \"[{name}]\" --names \"MCP,Backend,Frontend\" --prefix-colors \"cyan,magenta,green\" \"npm run dev:mcp\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "concurrently --prefix \"[{name}]\" --names \"MCP,Backend,Frontend\" --prefix-colors \"cyan,magenta,green\" \"npm run dev:mcp\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:mcp": "cd MCP && ..\\venv\\Scripts\\python.exe main.py",
     "dev:backend": "cd Backend && ..\\venv\\Scripts\\uvicorn.exe main:app --host 0.0.0.0 --port 8000 --reload",
     "dev:frontend": "cd FrontEnd && npm run dev"

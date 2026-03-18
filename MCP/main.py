@@ -3,6 +3,8 @@
 # FastMCP application entry point for the Legal Research MCP service.
 # Exposes tools for IP geolocation, case law search, and legislative search.
 
+import signal
+import sys
 from fastmcp import FastMCP
 from typing import Literal
 from config import settings
@@ -105,7 +107,16 @@ async def search_bills(query: str, state: str) -> list[dict]:
         return []
 
 
+def signal_handler(sig, frame):
+    print("\n[MCP] Shutting down gracefully...")
+    sys.exit(0)
+
 if __name__ == "__main__":
+    # Register signal handlers for clean shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    print("[MCP] Starting Legal Research MCP server...")
     mcp.run(
         transport="http",
         host="0.0.0.0",
