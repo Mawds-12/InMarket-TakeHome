@@ -44,5 +44,9 @@ def _to_case(raw: dict) -> dict:
         "citation": citation,
         "snippet": raw.get("snippet", ""),
         "url": raw.get("absolute_url", ""),
-        "raw_score": float(raw.get("score", 0.0))
+        "raw_score": float(raw.get("score", 0.0)),
+        "status": raw.get("status", "Unknown"),
+        "judge": raw.get("judge", ""),
+        "posture": raw.get("posture", ""),
+        "cite_count": int(raw.get("citeCount", 0))
     }

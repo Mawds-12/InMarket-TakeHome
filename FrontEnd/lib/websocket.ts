@@ -16,7 +16,7 @@ export class AnalysisWebSocket {
   }
 
   private initializeProgress(): AnalysisProgress {
-    const stages: StageType[] = ['jurisdiction', 'issue_extraction', 'retrieval', 'reduction', 'brief_writing']
+    const stages: StageType[] = ['jurisdiction', 'issue_extraction', 'retrieval', 'ranking', 'brief_writing']
     const stageMap: Record<StageType, StageInfo> = {} as Record<StageType, StageInfo>
     
     stages.forEach(stage => {
@@ -43,7 +43,7 @@ export class AnalysisWebSocket {
     detected_state?: string
   }): Promise<void> {
     return new Promise((resolve, reject) => {
-      const url = 'ws://localhost:3000/ws/analyze'
+      const url = 'ws://localhost:8000/ws/analyze'
       console.log('[WebSocket] Connecting to:', url)
       
       this.ws = new WebSocket(url)
@@ -151,12 +151,12 @@ export class AnalysisWebSocket {
         break
 
       case 'reduction_completed':
-        if (!this.progress.stages.reduction.metadata) {
-          this.progress.stages.reduction.metadata = {}
+        if (!this.progress.stages.ranking.metadata) {
+          this.progress.stages.ranking.metadata = {}
         }
-        this.progress.stages.reduction.metadata.input_count = event.input_count
-        this.progress.stages.reduction.metadata.filtered_count = event.filtered_count
-        this.progress.stages.reduction.metadata.token_usage = event.token_usage
+        this.progress.stages.ranking.metadata.input_count = event.input_count
+        this.progress.stages.ranking.metadata.filtered_count = event.filtered_count
+        this.progress.stages.ranking.metadata.token_usage = event.token_usage
         if (event.token_usage) {
           this.progress.totalTokens += event.token_usage.total_tokens
         }
@@ -225,8 +225,6 @@ export class AnalysisWebSocket {
   reset() {
     this.disconnect()
     this.progress = this.initializeProgress()
-    this.eventHandlers = []
-    this.progressHandler = null
-    this.errorHandler = null
+    this.notifyProgress()
   }
 }

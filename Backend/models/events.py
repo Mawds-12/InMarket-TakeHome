@@ -12,14 +12,14 @@ class BaseEvent(BaseModel):
 class StageStartedEvent(BaseEvent):
     """Event emitted when a processing stage begins."""
     event_type: Literal["stage_started"] = "stage_started"
-    stage: Literal["jurisdiction", "issue_extraction", "retrieval", "reduction", "brief_writing"]
+    stage: Literal["jurisdiction", "issue_extraction", "retrieval", "ranking", "reduction", "brief_writing"]
     data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class StageCompletedEvent(BaseEvent):
     """Event emitted when a processing stage completes."""
     event_type: Literal["stage_completed"] = "stage_completed"
-    stage: Literal["jurisdiction", "issue_extraction", "retrieval", "reduction", "brief_writing"]
+    stage: Literal["jurisdiction", "issue_extraction", "retrieval", "ranking", "reduction", "brief_writing"]
     duration_ms: int
     metadata: Dict[str, Any] = Field(default_factory=dict)
 

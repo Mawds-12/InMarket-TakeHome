@@ -11,11 +11,11 @@ const STAGE_LABELS: Record<StageType, string> = {
   jurisdiction: 'Jurisdiction Detection',
   issue_extraction: 'Issue Extraction',
   retrieval: 'Authority Retrieval',
-  reduction: 'Relevance Filtering',
+  ranking: 'Relevance Filtering',
   brief_writing: 'Brief Composition'
 }
 
-const STAGE_ORDER: StageType[] = ['jurisdiction', 'issue_extraction', 'retrieval', 'reduction', 'brief_writing']
+const STAGE_ORDER: StageType[] = ['jurisdiction', 'issue_extraction', 'retrieval', 'ranking', 'brief_writing']
 
 export default function StageTimeline({ progress }: StageTimelineProps) {
   return (
@@ -26,6 +26,10 @@ export default function StageTimeline({ progress }: StageTimelineProps) {
         {STAGE_ORDER.map((stageName, index) => {
           const stage = progress.stages[stageName]
           const isLast = index === STAGE_ORDER.length - 1
+          
+          if (!stage) {
+            return null
+          }
           
           return (
             <div key={stageName} className="relative pb-8">

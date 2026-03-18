@@ -75,6 +75,26 @@ class Authority(BaseModel):
         description="The holding or provision that matters for this issue",
         examples=["Text messages can constitute acceptance if terms are sufficiently definite"]
     )
+    status: Optional[str] = Field(
+        default=None,
+        description="Precedential status for cases: Published, Unpublished, etc."
+    )
+    judge: Optional[str] = Field(
+        default=None,
+        description="Authoring judge for cases"
+    )
+    posture: Optional[str] = Field(
+        default=None,
+        description="Procedural posture for cases: Affirmed, Reversed, etc."
+    )
+    cite_count: Optional[int] = Field(
+        default=None,
+        description="Number of citations (cases only)"
+    )
+    sponsors: Optional[List[dict]] = Field(
+        default=None,
+        description="Bill sponsors with name and party"
+    )
 
 
 class BriefResponse(BaseModel):
@@ -87,6 +107,11 @@ class BriefResponse(BaseModel):
         ...,
         description="Simple-language framing of the detected legal issue",
         examples=["Whether a text message exchange can form an enforceable contract for website services"]
+    )
+    analysis_summary: str = Field(
+        ...,
+        description="1-2 paragraph analysis integrating case law and providing a framework for answering the legal question",
+        examples=["Under contract law, text messages can form binding agreements if they contain all essential terms..."]
     )
     jurisdiction_used: str = Field(
         ...,

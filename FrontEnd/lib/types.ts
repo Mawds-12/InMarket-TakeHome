@@ -16,10 +16,21 @@ export interface Authority {
   url: string
   why_pertinent: string
   key_point: string
+  status?: string
+  judge?: string
+  posture?: string
+  cite_count?: number
+  sponsors?: Array<{
+    name: string
+    party?: string
+    primary?: boolean
+    classification?: string
+  }>
 }
 
 export interface BriefResponse {
   issue_summary: string
+  analysis_summary: string
   jurisdiction_used: string
   state_was_inferred: boolean
   pertinent_authorities: Authority[]
@@ -43,7 +54,7 @@ export interface StateDetectionResponse {
 }
 
 // WebSocket Event Types
-export type StageType = 'jurisdiction' | 'issue_extraction' | 'retrieval' | 'reduction' | 'brief_writing'
+export type StageType = 'jurisdiction' | 'issue_extraction' | 'retrieval' | 'ranking' | 'brief_writing'
 export type StageStatus = 'pending' | 'active' | 'completed' | 'error'
 
 export interface TokenUsage {

@@ -143,11 +143,6 @@ export default function Home() {
                   </option>
                 ))}
               </select>
-              {stateWasDetected && (
-                <span className="text-xs text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                  Detected from network
-                </span>
-              )}
             </div>
           </div>
 
@@ -196,81 +191,190 @@ export default function Home() {
                 New Analysis
               </button>
             </div>
-            <div className="bg-white shadow rounded-lg p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Issue Summary</h2>
-              <p className="text-gray-900">{result.issue_summary}</p>
-            </div>
+            <div className="bg-white shadow-xl rounded-xl overflow-hidden">
+              {/* Issue Summary Section */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+                <h2 className="text-2xl font-bold text-white mb-3">Legal Issue</h2>
+                <p className="text-blue-50 text-lg leading-relaxed">{result.issue_summary}</p>
+              </div>
 
-            {result.pertinent_authorities.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Pertinent Authorities</h2>
-                <div className="space-y-4">
-                  {result.pertinent_authorities.map((authority, idx) => (
-                    <div
-                      key={idx}
-                      className={`border-l-4 p-4 rounded-r ${
-                        authority.kind === 'case'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-green-500 bg-green-50'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-gray-900">{authority.title}</h3>
-                        <span className="text-xs text-gray-900 uppercase px-2 py-1 bg-gray-50 rounded">
-                          {authority.kind}
+              {/* Analysis Summary Section */}
+              {result.analysis_summary && (
+                <div className="px-8 py-6 bg-blue-50 border-b border-blue-200">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Analysis</h2>
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{result.analysis_summary}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Fact-Sensitive Considerations */}
+              {result.fact_sensitive_considerations.length > 0 && (
+                <div className="px-8 py-6 border-t border-gray-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-8 w-1 bg-yellow-500 rounded"></div>
+                    <h2 className="text-2xl font-bold text-gray-900">Fact-Sensitive Considerations</h2>
+                  </div>
+                  <ul className="space-y-2">
+                    {result.fact_sensitive_considerations.map((consideration, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 bg-yellow-100 text-yellow-700 rounded-full flex items-center justify-center text-sm font-semibold mt-0.5">
+                          {idx + 1}
                         </span>
-                      </div>
-                      {authority.citation && (
-                        <p className="text-sm text-gray-900 mb-1">{authority.citation}</p>
-                      )}
-                      {authority.court && (
-                        <p className="text-sm text-gray-900 mb-2">{authority.court}</p>
-                      )}
-                      <p className="text-sm text-gray-900 mb-2">{authority.date}</p>
-                      
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-900 mb-1">Why Pertinent:</p>
-                        <p className="text-sm text-gray-900">{authority.why_pertinent}</p>
-                      </div>
-                      
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-900 mb-1">Key Point:</p>
-                        <p className="text-sm text-gray-900">{authority.key_point}</p>
-                      </div>
-                      
-                      <a
-                        href={authority.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-3 text-sm text-blue-600 hover:text-blue-800"
+                        <span className="text-gray-800 leading-relaxed">{consideration}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Pertinent Authorities Section */}
+              {result.pertinent_authorities.length > 0 && (
+                <div className="px-8 py-6 border-t border-gray-200 bg-white">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="h-8 w-1 bg-blue-600 rounded"></div>
+                    <h2 className="text-2xl font-bold text-gray-900">Relevant Authorities</h2>
+                    <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+                      {result.pertinent_authorities.length} {result.pertinent_authorities.length === 1 ? 'Authority' : 'Authorities'}
+                    </span>
+                  </div>
+                  <div className="space-y-5">
+                    {result.pertinent_authorities.map((authority, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
                       >
-                        View Source
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    </div>
-                  ))}
+                        <div className={`h-2 ${
+                          authority.kind === 'case' ? 'bg-blue-500' : 'bg-green-500'
+                        }`}></div>
+                        <div className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-bold text-lg text-gray-900">{authority.title}</h3>
+                              <span className={`text-xs uppercase px-2 py-1 rounded font-semibold ${
+                                authority.kind === 'case' 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
+                                {authority.kind}
+                              </span>
+                            </div>
+                            
+                            {authority.kind === 'case' && (
+                              <div className="flex gap-2 mt-2 flex-wrap">
+                                {authority.status && (
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    authority.status === 'Published' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {authority.status}
+                                  </span>
+                                )}
+                                {authority.posture && (
+                                  <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
+                                    {authority.posture}
+                                  </span>
+                                )}
+                                {authority.cite_count !== undefined && authority.cite_count > 0 && (
+                                  <span className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800">
+                                    Cited {authority.cite_count}×
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {/* Case Details */}
+                        <div className="mb-4 space-y-1">
+                          {authority.citation && (
+                            <p className="text-sm font-medium text-gray-700">{authority.citation}</p>
+                          )}
+                          {authority.court && (
+                            <p className="text-sm text-gray-600">{authority.court}</p>
+                          )}
+                          {authority.judge && (
+                            <p className="text-sm text-gray-600"><span className="font-medium">Judge:</span> {authority.judge}</p>
+                          )}
+                          <p className="text-sm text-gray-500">{authority.date}</p>
+                        </div>
+                        {/* Bill Sponsors */}
+                        {authority.kind === 'bill' && authority.sponsors && authority.sponsors.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-sm font-semibold text-gray-900 mb-2">Sponsors:</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {authority.sponsors.map((sponsor, sidx) => (
+                                <span key={sidx} className={`text-xs px-2 py-1 rounded ${
+                                  sponsor.primary 
+                                    ? 'bg-green-100 text-green-800 font-medium' 
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {sponsor.name}
+                                  {sponsor.party && ` (${sponsor.party.charAt(0)})`}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {/* Analysis */}
+                        <div className="space-y-3 mb-4">
+                          <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+                            <p className="text-xs font-semibold text-blue-900 uppercase mb-1">Why Pertinent</p>
+                            <p className="text-sm text-gray-800 leading-relaxed">{authority.why_pertinent}</p>
+                          </div>
+                          
+                          <div className="bg-green-50 border-l-4 border-green-400 p-3 rounded">
+                            <p className="text-xs font-semibold text-green-900 uppercase mb-1">Key Point</p>
+                            <p className="text-sm text-gray-800 leading-relaxed font-medium">{authority.key_point}</p>
+                          </div>
+                        </div>
+                        {/* View Source Link */}
+                        <a
+                          href={authority.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                          <span>View Full Source</span>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Authority Citations Section */}
+                  <div className="mt-8 pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Source Citations</h3>
+                    <ul className="space-y-2">
+                      {result.pertinent_authorities.map((authority, idx) => (
+                        <li key={idx} className="text-sm text-gray-700">
+                          <span className="font-medium">{authority.title}</span>
+                          {authority.court && <span>, {authority.court}</span>}
+                          {authority.date && <span>, {authority.date}</span>}
+                          {authority.citation && <span> ({authority.citation})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              <div className="px-8 py-6 bg-gray-100 border-t border-gray-200">
+                <div className="flex items-start gap-3">
+                  <svg className="w-6 h-6 text-gray-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-2">Research Scope & Limitations</h2>
+                    <p className="text-gray-700 leading-relaxed">{result.coverage_note}</p>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {result.fact_sensitive_considerations.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Fact-Sensitive Considerations</h2>
-                <ul className="list-disc list-inside space-y-1">
-                  {result.fact_sensitive_considerations.map((consideration, idx) => (
-                    <li key={idx} className="text-gray-900">{consideration}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="border-t pt-4">
-              <p className="text-sm text-gray-900">{result.coverage_note}</p>
             </div>
-          </div>
           </>
         )}
       </div>

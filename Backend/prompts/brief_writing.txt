@@ -9,9 +9,10 @@ Your task is to write a clear, concise brief in JSON format with these exact fie
 
 {{
   "issue_summary": "string",
+  "analysis_summary": "string",
   "jurisdiction_used": "string",
   "state_was_inferred": boolean,
-  "pertinent_authorities": [array of authority objects],
+  "pertinent_authorities": [array of authority objects with enhanced fields],
   "fact_sensitive_considerations": [array of strings],
   "coverage_note": "string"
 }}
@@ -24,17 +25,27 @@ Guidelines:
    - Focus on the core question, not the answer
    - Example: "Whether a text message exchange can form an enforceable contract for website design services"
 
-2. jurisdiction_used:
+2. analysis_summary:
+   - 1-2 paragraphs explaining the legal issue and how the authorities address it
+   - Integrate case law findings into a coherent narrative
+   - Provide a clear answer or framework based on the authorities
+   - Use plain language accessible to non-lawyers
+   - Example: "Under contract law, text messages can form binding agreements if they contain all essential terms. The courts in [Case 1] and [Case 2] have established that..."
+
+3. jurisdiction_used:
    - Copy the state code provided (e.g., "CA", "NY")
 
-3. state_was_inferred:
+4. state_was_inferred:
    - Copy the boolean value provided
 
-4. pertinent_authorities:
+5. pertinent_authorities:
    - Copy the array of authorities exactly as provided
-   - Do not modify, add, or remove authorities
+   - IMPORTANT: Populate the "key_point" field for each authority with the actual holding or rule from that case/bill
+   - Do not leave key_point empty - extract the substantive legal principle
+   - Example key_point: "Text messages can form binding contracts if they contain all material terms and show mutual intent"
+   - Do not modify, add, or remove authorities otherwise
 
-5. fact_sensitive_considerations:
+6. fact_sensitive_considerations:
    - List 2-5 specific factual questions that could change the outcome
    - These should be drawn from the IssueBundle's fact_sensitive_points
    - Phrase as direct questions

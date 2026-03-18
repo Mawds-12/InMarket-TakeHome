@@ -91,7 +91,7 @@ export default function StageMetadata({ stageName, metadata }: StageMetadataProp
           </div>
         )
 
-      case 'reduction':
+      case 'ranking':
         return (
           <div className="mt-2 text-xs text-gray-600 space-y-1">
             <div className="flex items-center gap-2">
@@ -100,11 +100,9 @@ export default function StageMetadata({ stageName, metadata }: StageMetadataProp
               <span className="font-medium text-green-600">{metadata.filtered_count}</span>
               authorities
             </div>
-            {metadata.token_usage && (
-              <div className="text-blue-600">
-                {formatTokens(metadata.token_usage)}
-              </div>
-            )}
+            <div className="text-gray-500">
+              Selected by relevance ranking
+            </div>
           </div>
         )
 

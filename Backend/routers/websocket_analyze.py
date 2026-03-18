@@ -23,6 +23,161 @@ from exceptions import LLMError, MCPError
 router = APIRouter()
 
 
+async def rank_authorities(
+    issue_bundle,
+    raw_cases: list,
+    raw_bills: list,
+    callbacks=None
+) -> list:
+    """
+    Simple keyword-based ranking system that replaces LLM filtering.
+    Always returns results, never empty.
+    """
+    from models.schemas import Authority
+    from models.internal import RawCase, RawBill
+    
+    # Extract keywords from issue bundle
+    issue_keywords = []
+    if issue_bundle.case_query:
+        issue_keywords.extend(issue_bundle.case_query.lower().split())
+    if issue_bundle.bill_query:
+        issue_keywords.extend(issue_bundle.bill_query.lower().split())
+    if issue_bundle.topic_tags:
+        issue_keywords.extend([tag.lower() for tag in issue_bundle.topic_tags])
+    
+    # Remove common words and duplicates
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must'}
+    issue_keywords = [kw for kw in set(issue_keywords) if kw not in stop_words and len(kw) > 2]
+    
+    authorities = []
+    
+    # Score and process cases
+    scored_cases = []
+    for case in raw_cases:
+        score = 0
+        snippet_lower = case.snippet.lower()
+        title_lower = case.case_name.lower()
+        
+        # Count keyword matches in snippet and title
+        for keyword in issue_keywords:
+            snippet_matches = snippet_lower.count(keyword)
+            title_matches = title_lower.count(keyword)
+            score += snippet_matches * 2 + title_matches * 3  # Title matches weighted higher
+        
+        # Bonus for recent cases (last 10 years)
+        if case.date:
+            try:
+                year = int(case.date[:4])
+                if year >= 2014:
+                    score += 1
+            except:
+                pass
+        
+        # Bonus for higher courts
+        court_lower = case.court.lower()
+        if any(term in court_lower for term in ['supreme', 'appellate', 'court of appeal']):
+            score += 1
+        
+        # Bonus for published cases
+        if case.status == 'Published':
+            score += 0.5
+        
+        # Bonus for cited cases
+        if case.cite_count > 10:
+            score += 0.5
+        
+        if score > 0:  # Only include if some relevance
+            scored_cases.append((case, score))
+    
+    # Sort by score, take top 5
+    scored_cases.sort(key=lambda x: x[1], reverse=True)
+    top_cases = [case for case, score in scored_cases[:5]]
+    
+    # Convert cases to Authority objects
+    for case in top_cases:
+        authorities.append(Authority(
+            kind="case",
+            title=case.case_name,
+            citation=case.citation,
+            court=case.court,
+            date=case.date,
+            url=case.url,
+            why_pertinent=f"Relevant to {issue_bundle.issue_label} based on keyword matching",
+            key_point=case.snippet[:200] + "..." if len(case.snippet) > 200 else case.snippet,
+            status=case.status,
+            judge=case.judge,
+            posture=case.posture,
+            cite_count=case.cite_count
+        ))
+    
+    # Score and process bills
+    scored_bills = []
+    for bill in raw_bills:
+        score = 0
+        title_lower = bill.title.lower()
+        
+        # Count keyword matches in title
+        for keyword in issue_keywords:
+            title_matches = title_lower.count(keyword)
+            score += title_matches * 3
+        
+        # Bonus for recent bills
+        if bill.latest_action_date:
+            try:
+                year = int(bill.latest_action_date[:4])
+                if year >= 2019:
+                    score += 1
+            except:
+                pass
+        
+        # Bonus for bills with sponsors
+        if bill.sponsors and len(bill.sponsors) > 0:
+            score += 0.5
+        
+        if score > 0:  # Only include if some relevance
+            scored_bills.append((bill, score))
+    
+    # Sort bills by score, take top 3
+    scored_bills.sort(key=lambda x: x[1], reverse=True)
+    top_bills = [bill for bill, score in scored_bills[:3]]
+    
+    # Convert bills to Authority objects
+    for bill in top_bills:
+        authorities.append(Authority(
+            kind="bill",
+            title=bill.title,
+            citation=None,
+            court=None,
+            date=bill.latest_action_date,
+            url=bill.url,
+            why_pertinent=f"Relevant to {issue_bundle.issue_label} based on keyword matching",
+            key_point=f"Legislative action: {bill.latest_action}",
+            sponsors=bill.sponsors
+        ))
+    
+    # If no authorities found (rare edge case), return top cases anyway
+    if not authorities and raw_cases:
+        # Return top 3 cases regardless of score
+        for case in raw_cases[:3]:
+            authorities.append(Authority(
+                kind="case",
+                title=case.case_name,
+                citation=case.citation,
+                court=case.court,
+                date=case.date,
+                url=case.url,
+                why_pertinent="Available case law for reference",
+                key_point=case.snippet[:200] + "..." if len(case.snippet) > 200 else case.snippet,
+                status=case.status,
+                judge=case.judge,
+                posture=case.posture,
+                cite_count=case.cite_count
+            ))
+    
+    print(f"[RANKING] Processed {len(raw_cases)} cases + {len(raw_bills)} bills -> {len(authorities)} authorities")
+    return authorities
+
+
 @router.websocket("/ws/test")
 async def websocket_test(websocket: WebSocket):
     """Simple test WebSocket endpoint."""
@@ -138,6 +293,8 @@ async def websocket_analyze(websocket: WebSocket):
         token_usage = token_callback.get_usage()
         total_tokens += token_usage.get("total_tokens", 0)
         
+        print(f"[STAGE] Issue extraction complete: duration={duration_ms}ms, tokens={token_usage}")
+        
         await emit_event(websocket, IssueExtractedEvent(
             issue_label=issue_bundle.issue_label,
             topic_tags=issue_bundle.topic_tags,
@@ -175,6 +332,8 @@ async def websocket_analyze(websocket: WebSocket):
         
         duration_ms = int((time.time() - stage_start) * 1000)
         
+        print(f"[STAGE] Retrieval complete: cases={len(raw_cases)}, bills={len(raw_bills)}, case_duration={case_metadata['duration_ms']}ms, bill_duration={bill_metadata['duration_ms']}ms")
+        
         await emit_event(websocket, RetrievalCompletedEvent(
             case_count=len(raw_cases),
             bill_count=len(raw_bills),
@@ -193,32 +352,38 @@ async def websocket_analyze(websocket: WebSocket):
             }
         ))
         
-        # Stage C: Relevance Reduction
+        # Stage C: Authority Ranking (replaces LLM filtering)
         stage_start = time.time()
-        await emit_event(websocket, StageStartedEvent(stage="reduction"))
+        await emit_event(websocket, StageStartedEvent(stage="ranking"))
         
-        token_callback = TokenCountingCallback()
-        pertinent_authorities = await reduce_to_pertinent(
+        pertinent_authorities = await rank_authorities(
             issue_bundle,
             raw_cases,
-            raw_bills,
-            callbacks=[token_callback]
+            raw_bills
         )
         
         duration_ms = int((time.time() - stage_start) * 1000)
-        token_usage = token_callback.get_usage()
-        total_tokens += token_usage.get("total_tokens", 0)
+        
+        print(f"[STAGE] Authority ranking complete: duration={duration_ms}ms, input={len(raw_cases) + len(raw_bills)}, selected={len(pertinent_authorities)}")
+        print(f"[DEBUG] Raw cases: {len(raw_cases)}, Raw bills: {len(raw_bills)}")
+        if pertinent_authorities:
+            print(f"[DEBUG] First authority: {pertinent_authorities[0].title}")
+        else:
+            print(f"[DEBUG] No authorities returned - this is the problem!")
+            print(f"[DEBUG] Issue bundle: {issue_bundle.issue_label}")
+            if raw_cases:
+                print(f"[DEBUG] First case snippet: {raw_cases[0].snippet[:100]}...")
         
         await emit_event(websocket, ReductionCompletedEvent(
             input_count=len(raw_cases) + len(raw_bills),
             filtered_count=len(pertinent_authorities),
-            token_usage=token_usage
+            token_usage={"total_tokens": 0, "prompt_tokens": 0, "completion_tokens": 0, "requests": 0}
         ))
         
         await emit_event(websocket, StageCompletedEvent(
-            stage="reduction",
+            stage="ranking",
             duration_ms=duration_ms,
-            metadata={"token_usage": token_usage}
+            metadata={"filtered_count": len(pertinent_authorities)}
         ))
         
         # Stage D: Brief Writing
@@ -238,6 +403,8 @@ async def websocket_analyze(websocket: WebSocket):
         token_usage = token_callback.get_usage()
         total_tokens += token_usage.get("total_tokens", 0)
         
+        print(f"[STAGE] Brief writing complete: duration={duration_ms}ms, authorities={len(pertinent_authorities)}, tokens={token_usage}")
+        
         await emit_event(websocket, BriefCompletedEvent(
             authority_count=len(pertinent_authorities),
             token_usage=token_usage
@@ -251,6 +418,10 @@ async def websocket_analyze(websocket: WebSocket):
         
         # Analysis Complete
         total_duration_ms = int((time.time() - overall_start) * 1000)
+        
+        print(f"[COMPLETE] Analysis finished: total_duration={total_duration_ms}ms, total_tokens={total_tokens}")
+        print(f"[COMPLETE] Token breakdown: issue_extraction + reduction + brief_writing = {total_tokens}")
+        
         await emit_event(websocket, AnalysisCompleteEvent(
             total_duration_ms=total_duration_ms,
             total_tokens=total_tokens,
@@ -258,7 +429,7 @@ async def websocket_analyze(websocket: WebSocket):
         ))
         
         await websocket.close()
-        logger.info("Analysis completed successfully")
+        print("Analysis completed successfully")
         
     except LLMError as e:
         logger.error(f"LLM error during analysis: {str(e)}")

@@ -31,6 +31,21 @@ def _to_bill(raw: dict) -> dict:
     Returns:
         Normalized bill dict
     """
+    # Extract sponsors - limit to first 5 to avoid bloat
+    sponsorships = raw.get("sponsorships", [])
+    sponsors = []
+    for s in sponsorships[:5]:
+        sponsor = {
+            "name": s.get("name", "Unknown"),
+            "primary": s.get("primary", False),
+            "classification": s.get("classification", "")
+        }
+        # Add party if person object available
+        person = s.get("person")
+        if person:
+            sponsor["party"] = person.get("party", "Unknown")
+        sponsors.append(sponsor)
+    
     return {
         "bill_id": raw.get("identifier", "Unknown"),
         "title": raw.get("title", ""),
@@ -39,5 +54,6 @@ def _to_bill(raw: dict) -> dict:
         "url": raw.get("openstates_url", ""),
         "latest_action": raw.get("latest_action_description", ""),
         "latest_action_date": raw.get("latest_action_date", ""),
-        "status": raw.get("classification", [])
+        "status": raw.get("classification", []),
+        "sponsors": sponsors
     }

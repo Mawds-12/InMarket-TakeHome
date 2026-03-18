@@ -34,8 +34,10 @@ async def search_opinions(query: str, state: str, mode: str = "semantic") -> dic
         "type": "o",  # opinions
     }
     
+    # For state searches, add state to query for better relevance
+    # Don't use court parameter - it expects specific court IDs like "cal", not state codes
     if state not in ("federal", "nationwide"):
-        params["court"] = state.lower()
+        params["q"] = f"{query} {state.upper()}"
     
     if mode == "semantic":
         params["semantic"] = "true"

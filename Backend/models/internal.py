@@ -50,6 +50,10 @@ class RawCase(BaseModel):
     snippet: str
     url: str
     raw_score: float
+    status: str = Field(default="Unknown", description="Published, Unpublished, Errata, etc.")
+    judge: str = Field(default="", description="Authoring judge name")
+    posture: str = Field(default="", description="Procedural outcome (Affirmed, Reversed, etc.)")
+    cite_count: int = Field(default=0, description="Number of times this case has been cited")
 
 
 class RawBill(BaseModel):
@@ -65,3 +69,7 @@ class RawBill(BaseModel):
     latest_action: str
     latest_action_date: str
     status: list[str]
+    sponsors: list[dict] = Field(
+        default_factory=list,
+        description="List of sponsors with name, party, classification"
+    )
