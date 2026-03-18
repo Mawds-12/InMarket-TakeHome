@@ -57,10 +57,12 @@ cd precedent-brief
 
 The project root contains four folders:
 ```
-documentation/   ← guides and contracts (you are reading one)
+Documentation/   ← guides and contracts (you are reading one)
 MCP/             ← wrapper microservice
 Backend/         ← LLM agent
 FrontEnd/        ← Next.js app
+venv/            ← shared Python virtual environment (created on first run)
+requirements.txt ← consolidated Python dependencies
 ```
 
 ---
@@ -108,69 +110,39 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
 ---
 
-## Step 4 — Start the MCP Service
+## Step 4 — Install Dependencies
 
+**Automated (Recommended):**
 ```bash
-cd MCP
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-```
-
-**Verify it's running:**
-```bash
-curl http://localhost:8001/health
-# Expected: {"status": "ok", "service": "mcp"}
-```
-
-**Quick smoke test — geolocation:**
-```bash
-curl -X POST http://localhost:8001/geo/default-state \
-  -H "Content-Type: application/json" \
-  -d '{"ip": "8.8.8.8"}'
-# Expected: {"country": "US", "state": "California", "state_code": "CA", "confidence": "default_only"}
-```
-
----
-
-## Step 5 — Start the Backend
-
-Open a second terminal tab/window.
-
-```bash
-cd Backend
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-**Verify it's running:**
-```bash
-curl http://localhost:8000/health
-# Expected: {"status": "ok", "service": "backend"}
-```
-
-**Quick smoke test — issue extraction only (no external API calls):**
-```bash
-curl -X POST http://localhost:8000/api/extract-issue \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Is a text message enough to form a contract?", "state": "OR"}'
-# Expected: IssueBundle JSON
-```
-
----
-
-## Step 6 — Start the Frontend
-
-Open a third terminal tab/window.
-
-```bash
-cd FrontEnd
+# From project root
 npm install
 npm run dev
 ```
+This will automatically copy `.env` files, install Python and Node dependencies, and start all services.
+
+**Manual Installation:**
+```bash
+# From project root
+npm install
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cd FrontEnd && npm install && cd ..
+```
+
+---
+
+## Step 5 — Start All Services
+
+```bash
+# From project root
+npm run dev
+```
+
+This will start all three services in parallel with color-coded output:
+- **[MCP]** (cyan) on port 8001
+- **[Backend]** (magenta) on port 8000  
+- **[Frontend]** (green) on port 3000
 
 Open http://localhost:3000 in your browser.
 
@@ -182,21 +154,37 @@ You should see the Precedent Brief research workspace with:
 
 ---
 
-## Running All Three at Once (Optional)
+## Step 6 — Verify Services
 
-If you have `make` available, you can use the project root `Makefile`:
-
+**MCP Service:**
 ```bash
-# From project root
-make dev
+curl http://localhost:8001/health
+# Expected: {"status": "ok", "service": "mcp"}
 ```
 
-Or install `concurrently` globally and run:
+**Backend Service:**
 ```bash
-npx concurrently \
-  "cd MCP && uvicorn main:app --port 8001 --reload" \
-  "cd Backend && uvicorn main:app --port 8000 --reload" \
-  "cd FrontEnd && npm run dev"
+curl http://localhost:8000/health
+# Expected: {"status": "ok", "service": "backend"}
+```
+
+**Frontend:** Open http://localhost:3000 in your browser.
+
+---
+
+## Running Services Individually (Optional)
+
+If you need to run services separately for debugging:
+
+```bash
+# MCP only
+npm run dev:mcp
+
+# Backend only
+npm run dev:backend
+
+# Frontend only
+npm run dev:frontend
 ```
 
 ---

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+        
+        // Test 1: Simple test endpoint
+        console.log('Testing /ws/test endpoint...');
+        const testWs = new WebSocket('ws://localhost:8000/ws/test');
+        
+        testWs.onopen = () => {
+            console.log('Test WebSocket connected!');
+            statusDiv.innerHTML = '<span style="color: green;">✓ Test endpoint connected!</span>';
+        };
+        
+        testWs.onmessage = (event) => {
+            console.log('Test message:', event.data);
+            messagesDiv.innerHTML += `<p>Test: ${event.data}</p>`;
+        };
+        
+        testWs.onerror = (error) => {
+            console.error('Test WebSocket error:', error);
+            statusDiv.innerHTML = '<span style="color: red;">✗ Test connection failed</span>';
+        };
+        
+        testWs.onclose = () => {
+            console.log('Test WebSocket closed');
+            
+            // Test 2: Analysis endpoint
+            setTimeout(() => {
+                console.log('Testing /ws/analyze endpoint...');
+                const question = encodeURIComponent('Is this a valid contract?');
+                const analyzeWs = new WebSocket(`ws://localhost:8000/ws/analyze?question=${question}&search_mode=semantic&detected_state=CA`);
+                
+                analyzeWs.onopen = () => {
+                    console.log('Analysis WebSocket connected!');
+                    statusDiv.innerHTML += '<br><span style="color: green;">✓ Analysis endpoint connected!</span>';
+                };
+                
+                analyzeWs.onmessage = (event) => {
+                    console.log('Analysis message:', event.data);
+                    messagesDiv.innerHTML += `<p>Analysis: ${event.data.substring(0, 100)}...</p>`;
+                };
+                
+                analyzeWs.onerror = (error) => {
+                    console.error('Analysis WebSocket error:', error);
+                    statusDiv.innerHTML += '<br><span style="color: red;">✗ Analysis connection failed</span>';
+                };
+                
+                analyzeWs.onclose = () => {
+                    console.log('Analysis WebSocket closed');
+                };
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

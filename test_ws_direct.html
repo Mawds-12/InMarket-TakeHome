@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct WebSocket Test</title>
+</head>
+<body>
+    <h1>Direct WebSocket Connection Test</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <pre id="output"></pre>
+    
+    <script>
+        function log(msg) {
+            const output = document.getElementById('output');
+            output.textContent += msg + '\n';
+            console.log(msg);
+        }
+        
+        function testConnection() {
+            log('=== Testing WebSocket Connection ===');
+            const ws = new WebSocket('ws://localhost:8000/ws/analyze');
+            
+            ws.onopen = () => {
+                log('✅ WebSocket opened!');
+                log('Sending test message...');
+                ws.send(JSON.stringify({
+                    question: 'Test question',
+                    search_mode: 'semantic',
+                    detected_state: 'CA'
+                }));
+            };
+            
+            ws.onmessage = (event) => {
+                log(`📨 Received: ${event.data.substring(0, 200)}...`);
+            };
+            
+            ws.onerror = (error) => {
+                log(`❌ WebSocket error: ${error}`);
+                log(`Error type: ${error.type}`);
+                log(`Error target: ${error.target.readyState}`);
+            };
+            
+            ws.onclose = (event) => {
+                log(`🔌 WebSocket closed: code=${event.code}, reason=${event.reason}, clean=${event.wasClean}`);
+            };
+        }
+    </script>
+</body>
+</html>

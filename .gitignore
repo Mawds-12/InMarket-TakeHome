@@ -4,8 +4,7 @@ Backend/.env
 FrontEnd/.env.local
 
 # Python virtual environments
-MCP/venv/
-Backend/venv/
+venv/
 **/__pycache__/
 *.pyc
 *.pyo
